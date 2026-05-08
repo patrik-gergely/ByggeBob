@@ -12,6 +12,7 @@ public class ByggeBob {
         int nästaTur = 1;
         String[] spelareSymboler = {"♠", "♥", "♦", "♣"};
         String[] spelareNamn = {"Späder", "Hjärter", "Ruter", "Klöver"};
+        int[] spelareRuta = {0,0,0,0};
         String fråga;
         
         String[] rutor = new String[(rutorPerRad*3)+2];
@@ -58,16 +59,25 @@ public class ByggeBob {
         }
         
         
-        int[] rundaVärden = spelRunda(nästaTur);
-        skrivUtSpelplan(rutor, rutorPerRad);
+        spelareRuta = spelRunda(nästaTur, spelareRuta);
+        skrivUtSpelplan(rutor, rutorPerRad, spelareRuta, spelareSymboler);
     }
     
     //returnerar ett värde 1-6
     static int tärningSlump() {
-        return (int)(Math.random()*6+1);
+        return (int)(Math.random()*6+1); 
     }
     
-    static int[] spelRunda(int nästaTur) {
+    static String hämtaRutaVärde(String[] rutor, int[] spelareRuta, String[] spelareSymboler, int rutaIndex) {
+    for (int i = 0; i < spelareRuta.length; i++) {
+        if (spelareRuta[i] == rutaIndex + 1) {
+            return spelareSymboler[i];
+        }
+    }
+    return rutor[rutaIndex];
+}
+    
+    static int[] spelRunda(int nästaTur, int[] spelareRuta) {
         Scanner input = new Scanner(System.in);
         String[] spelareSymboler = {"♠", "♥", "♦", "♣"};
         String[] spelareNamn = {"Späder", "Hjärter", "Ruter", "Klöver"};
@@ -76,7 +86,21 @@ public class ByggeBob {
                 + "\nTryck [Enter] för att slå tärningen");
         input.nextLine();
         
-        return new int[]{nästaTur};
+        int tärningSlag = tärningSlump();
+        
+        spelareRuta[nästaTur-1] = spelareRuta[nästaTur-1]+tärningSlag;
+        
+        if (tärningSlag == 6) {
+            System.out.println("Du Slog: "+tärningSlag+" !!!");
+        } else if (tärningSlag == 1) {
+            System.out.println("Du Slog: "+tärningSlag+" ...");
+        } else if (tärningSlag == 4 || tärningSlag == 5) {
+            System.out.println("Du Slog: "+tärningSlag+" !");
+        } else {
+            System.out.println("Du Slog: "+tärningSlag);
+        }
+        
+        return spelareRuta;
     }
     
     static void visaRegler() {
@@ -123,58 +147,63 @@ public class ByggeBob {
         return new int[]{antalSpelare, rutorPerRad, specialRutor};
     }
     
-    //Skriver ut spelplanen
-    static void skrivUtSpelplan(String[] rutor, int rutorPerRad) {
+    // Skriver ut spelplanen
+    static void skrivUtSpelplan(String[] rutor, int rutorPerRad, int[] spelareRuta, String[] spelareSymboler) {
         int rutaSkrivUt = 0; // för att kolla vilken ruta i arrayen "rutor" som ska skrivas ut
         for (int i = 1; i < 12; i++) {
             if (!(i % 2 == 0)) {
-                //skriv ut rutornas kanter
+                // Skriv ut rutornas kanter
                 System.out.print("|");
                 for (int j = 0; j < rutorPerRad; j++) {
                     System.out.print("----|");
                 }
                 System.out.println();
             } else {
-                //Skriv ut själva värden av rutorna
+                // Skriv ut själva värdena av rutorna
                 if (i == 4) {
-                    //bara en ruta på höger sida
+                    // Bara en ruta på höger sida
                     for (int j = 0; j < rutorPerRad-1; j++) {
                         System.out.print("     ");
                     }
-                    if (rutor[rutaSkrivUt].length()>1) {
-                        System.out.println("| "+rutor[rutaSkrivUt]+" |");
+                    String visaVärde = hämtaRutaVärde(rutor, spelareRuta, spelareSymboler, rutaSkrivUt);
+                    if (visaVärde.length() > 1) {
+                        System.out.println("| " + visaVärde + " |");
                     } else {
-                        System.out.println("| "+rutor[rutaSkrivUt]+"  |");
+                        System.out.println("| " + visaVärde + "  |");
                     }
                     rutaSkrivUt++;
                 } else if (i == 8) {
-                    //bara en ruta på vänster sida
-                    if (rutor[rutaSkrivUt].length()>1) {
-                        System.out.println("| "+rutor[rutaSkrivUt]+" |");
+                    // Bara en ruta på vänster sida
+                    String visaVärde = hämtaRutaVärde(rutor, spelareRuta, spelareSymboler, rutaSkrivUt);
+                    if (visaVärde.length() > 1) {
+                        System.out.println("| " + visaVärde + " |");
                     } else {
-                        System.out.println("| "+rutor[rutaSkrivUt]+"  |");
+                        System.out.println("| " + visaVärde + "  |");
                     }
                     rutaSkrivUt++;
                 } else if (i == 6) {
-                    //en rad av rutor fasst i omvänd ordning
+                    // En rad av rutor i omvänd ordning
                     System.out.print("|");
                     for (int j = 0; j < rutorPerRad; j++) {
-                        if (rutor[(rutaSkrivUt+(rutorPerRad-(j*2)-1))].length()>1) {
-                            System.out.print(" "+rutor[(rutaSkrivUt+(rutorPerRad-(j*2)-1))]+" |");
+                        int omväntIndex = rutaSkrivUt + (rutorPerRad - (j * 2) - 1);
+                        String visaVärde = hämtaRutaVärde(rutor, spelareRuta, spelareSymboler, omväntIndex);
+                        if (visaVärde.length() > 1) {
+                            System.out.print(" " + visaVärde + " |");
                         } else {
-                            System.out.print(" "+rutor[(rutaSkrivUt+(rutorPerRad-(j*2)-1))]+"  |");
+                            System.out.print(" " + visaVärde + "  |");
                         }
                         rutaSkrivUt++;
                     }
                     System.out.println();
                 } else {
-                    //en rad av rutor i vanlig ordning
+                    // En rad av rutor i vanlig ordning
                     System.out.print("|");
                     for (int j = 0; j < rutorPerRad; j++) {
-                        if (rutor[rutaSkrivUt].length()>1) {
-                            System.out.print(" "+rutor[rutaSkrivUt]+" |");
+                        String visaVärde = hämtaRutaVärde(rutor, spelareRuta, spelareSymboler, rutaSkrivUt);
+                        if (visaVärde.length() > 1) {
+                            System.out.print(" " + visaVärde + " |");
                         } else {
-                            System.out.print(" "+rutor[rutaSkrivUt]+"  |");
+                            System.out.print(" " + visaVärde + "  |");
                         }
                         rutaSkrivUt++;
                     }
