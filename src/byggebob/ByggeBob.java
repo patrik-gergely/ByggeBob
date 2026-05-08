@@ -63,13 +63,17 @@ public class ByggeBob {
             spelareRuta = spelRunda(nästaTur, spelareRuta, rutorPerRad, antalSpelare);
             
             if (spelareRuta[nästaTur-1] == -1) {
+                System.out.println();
                 System.out.println(spelareNamn[nästaTur-1]+" har vunnit!");
+                System.out.println();
                 antalVinnare++;
             }
             
-            if (antalVinnare == antalSpelare) {
+            if (antalVinnare == antalSpelare-1) {
                 break;
             }
+            
+            skrivUtSpelplan(rutor, rutorPerRad, spelareRuta, spelareSymboler);
             
             if (nästaTur == antalSpelare) {
                 nästaTur = 1;
@@ -79,10 +83,6 @@ public class ByggeBob {
                     nästaTur++;
                 }
             }
-            
-            input.nextLine();
-            
-            skrivUtSpelplan(rutor, rutorPerRad, spelareRuta, spelareSymboler);
         }
         
         System.out.println("Spelet har slutat!");
@@ -118,21 +118,6 @@ public class ByggeBob {
             spelareRuta[nästaTur-1] = -1;
         }
         
-        if (spelareRuta[nästaTur - 1] > 0) {
-            boolean skaKnuffa = true;
-            while (skaKnuffa) {
-                skaKnuffa = false;
-                for (int i = 0; i < antalSpelare; i++) {
-                    if (i == nästaTur - 1) continue;
-                    if (spelareRuta[i] == spelareRuta[nästaTur - 1] && spelareRuta[i] > 0) {
-                        System.out.println(spelareNamn[nästaTur - 1] + " knuffade " + spelareNamn[i] + " en ruta bak!");
-                        spelareRuta[i]--;
-                        skaKnuffa = true;
-                    }
-                }
-            }
-        }
-        
         if (tärningSlag == 6) {
             System.out.println("Du Slog: "+tärningSlag+" !!!");
         } else if (tärningSlag == 1) {
@@ -141,6 +126,24 @@ public class ByggeBob {
             System.out.println("Du Slog: "+tärningSlag+" !");
         } else {
             System.out.println("Du Slog: "+tärningSlag);
+        }
+        
+        System.out.println();
+        
+        if (spelareRuta[nästaTur - 1] > 0) {
+            boolean skaKnuffa = true;
+            while (skaKnuffa) {
+                skaKnuffa = false;
+                for (int i = 0; i < antalSpelare; i++) {
+                    if (i == nästaTur - 1) continue;
+                    if (spelareRuta[i] == spelareRuta[nästaTur - 1] && spelareRuta[i] > 0) {
+                        System.out.println(spelareNamn[nästaTur - 1] + " knuffade " + spelareNamn[i] + " en ruta bak!");
+                        System.out.println();
+                        spelareRuta[i]--;
+                        skaKnuffa = true;
+                    }
+                }
+            }
         }
         
         return spelareRuta;
