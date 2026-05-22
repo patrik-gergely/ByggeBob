@@ -5,27 +5,25 @@ public class ByggeBob {
 
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
+        
         // Variabeldeklerationer
+        
+            // Default inställningar
         int rutorPerRad = 9;
         int antalSpelare = 4;
-        int specialRutor = 5; // var femte ruta
+        int specialRutor = 5; // var femte ruta är specialruta
+        
+            // Spelvariabler
         int nästaTur = 1;
         int antalVinnare = 0;
         String[] spelareSymboler = {"♠", "♥", "♦", "♣"};
         String[] spelareNamn = {"Späder", "Hjärter", "Ruter", "Klöver"};
-        int[] spelareRuta = {0,0,0,0};
-        boolean[] skippaRunda = {false,false,false,false};
-        String fråga;
+        int[] spelareRuta = new int[antalSpelare];
+        boolean[] skippaRunda = new boolean[antalSpelare];
         
-        String[] rutor = new String[(rutorPerRad*3)+2];
-        
-        for (int i = 0; i < rutor.length; i++) {
-            if ((i+1) % specialRutor == 0) {
-                rutor[i]= "!";
-            } else {
-                rutor[i]= ""+(i+1);
-            }
-        }
+            // Bygga spelplanen
+            // Rutor får nummer och specialrutor
+        String[] rutor = byggSpelplan(rutorPerRad, specialRutor);
         
         // Logik
         System.out.println("---- Bygge Bob ----");
@@ -36,7 +34,7 @@ public class ByggeBob {
                 + "\nSkriv in [I] för att ändra inställningarna"
                 + "\n(Antalet Spelare, Rutor och Specialrutor.)");
             
-            fråga = input.nextLine();
+            String fråga = input.nextLine();
             
             if (fråga.equalsIgnoreCase("R")) {
                 visaRegler();
@@ -45,28 +43,19 @@ public class ByggeBob {
                 antalSpelare = nyaInställningar[0];
                 rutorPerRad = nyaInställningar[1];
                 specialRutor = nyaInställningar[2];
-                rutor = new String[(rutorPerRad * 3) + 2];
-                if (specialRutor == 0) {
-                    for (int i = 0; i < rutor.length; i++) {
-                        rutor[i] = "" + (i + 1);
-                    }
-                } else {
-                    for (int i = 0; i < rutor.length; i++) {
-                        if ((i + 1) % specialRutor == 0) {
-                            rutor[i] = "!";
-                        } else {
-                            rutor[i] = "" + (i + 1);
-                        }
-                    }
-                }    
+                spelareRuta = new int[antalSpelare];
+                skippaRunda = new boolean[antalSpelare];
+                rutor = byggSpelplan(rutorPerRad, specialRutor);  
             } else {
                 break;
             }
         }
         
+        // Spel loop
         while(true) {
-            spelareRuta = spelRunda(nästaTur, spelareRuta, rutorPerRad, antalSpelare, specialRutor, skippaRunda);
+            spelareRuta = spelRunda(nästaTur, spelareRuta, rutorPerRad, antalSpelare, specialRutor, skippaRunda, rutor.length);
             
+            // kolla om någon har vunnit
             if (spelareRuta[nästaTur-1] == -1) {
                 System.out.println();
                 System.out.println(spelareNamn[nästaTur-1]+" har vunnit!");
@@ -74,17 +63,23 @@ public class ByggeBob {
                 antalVinnare++;
             }
             
+            // Spelet slutar om bara en spelare är kvar
             if (antalVinnare == antalSpelare-1) {
                 break;
             }
             
             skrivUtSpelplan(rutor, rutorPerRad, spelareRuta, spelareSymboler);
             
+            // Vems tur det är näst och om det är vinnare så hoppas över
             if (nästaTur == antalSpelare) {
                 nästaTur = 1;
             } else {
                 nästaTur++;
-                while (nästaTur <= antalSpelare && spelareRuta[nästaTur-1] == -1) {
+            }
+            while (spelareRuta[nästaTur-1] == -1) {
+                if (nästaTur == antalSpelare) {
+                    nästaTur = 1;
+                } else {
                     nästaTur++;
                 }
             }
@@ -93,28 +88,51 @@ public class ByggeBob {
         System.out.println("Spelet har slutat!");
     }
     
+    //bygger spelplanens array beroende på inställningarna
+    static String[] byggSpelplan(int rutorPerRad, int specialRutor) {
+        String[] rutor = new String[(rutorPerRad * 3) + 2];
+        for (int i = 0; i < rutor.length; i++) {
+            if (specialRutor > 0 && (i + 1) % specialRutor == 0) {
+                rutor[i] = "!";
+            } else {
+                rutor[i] = "" + (i + 1);
+            }
+        }
+        return rutor;   
+    }
+    
     //returnerar ett värde 1-6
     static int tärningSlump() {
         return (int)(Math.random()*6+1); 
     }
     
+    //Returnerar spelarens symbol om de står på rutan så att man kan se spelare på spelplan
     static String hämtaRutaVärde(String[] rutor, int[] spelareRuta, String[] spelareSymboler, int rutaIndex) {
-    for (int i = 0; i < spelareRuta.length; i++) {
-        if (spelareRuta[i] == rutaIndex + 1) {
-            return spelareSymboler[i];
+        for (int i = 0; i < spelareRuta.length; i++) {
+            if (spelareRuta[i] == rutaIndex + 1) {
+                return spelareSymboler[i];
+            }
         }
+        return rutor[rutaIndex];
     }
-    return rutor[rutaIndex];
-}
     
-    static int[] spelRunda(int nästaTur, int[] spelareRuta, int rutorPerRad, int antalSpelare, int specialRutor, boolean[] skippaRunda) {
+    // Hanterar en spel runda, att den slår tärningen, flyttar och även om man landar på specialruta
+    static int[] spelRunda(int nästaTur, int[] spelareRuta, int rutorPerRad, int antalSpelare, int specialRutor, boolean[] skippaRunda, int boardSize) {
         Scanner input = new Scanner(System.in);
         String[] spelareSymboler = {"♠", "♥", "♦", "♣"};
         String[] spelareNamn = {"Späder", "Hjärter", "Ruter", "Klöver"};
         String[] talSkriva = {"Ett", "Två", "Tre", "Fyra", "Fem", "Sex"};
         
-        System.out.println("---- Spelare "+nästaTur+" ("+spelareNamn[nästaTur-1]+") ----"
-                + "\nTryck [Enter] för att slå tärningen");
+        System.out.println("---- Spelare "+nästaTur+" ("+spelareNamn[nästaTur-1]+") ----");
+        
+        // Kollar om spelaren ska skippa runda eller inte.
+        if (skippaRunda[nästaTur-1]) {
+            System.out.println(spelareNamn[nästaTur-1] + " skippar rundan!");
+            skippaRunda[nästaTur-1] = false;
+            return spelareRuta;
+        }
+        
+        System.out.println("Tryck [Enter] för att slå tärningen");
         input.nextLine();
         
         int rutaInnanSlag = spelareRuta[nästaTur-1];
@@ -122,10 +140,12 @@ public class ByggeBob {
         int tärningSlag = tärningSlump();
         spelareRuta[nästaTur-1] = spelareRuta[nästaTur-1]+tärningSlag;
         
-        if (spelareRuta[nästaTur-1] > rutorPerRad*3+2) {
+        //Spelaren vinner om de går över sista rutan
+        if (spelareRuta[nästaTur-1] >= boardSize) {
             spelareRuta[nästaTur-1] = -1;
         }
         
+        //Skriver ut tärningslag och olika medellande beroende på slag
         if (tärningSlag == 6) {
             System.out.println("Du Slog "+talSkriva[tärningSlag-1]+"!!!");
         } else if (tärningSlag == 1) {
@@ -136,6 +156,7 @@ public class ByggeBob {
             System.out.println("Du Slog "+talSkriva[tärningSlag-1]);
         }
         
+        //Clack beroende på hur många rutor man går
         if (spelareRuta[nästaTur - 1] > 0) {
             System.out.println();
             System.out.print("Clack");
@@ -144,6 +165,7 @@ public class ByggeBob {
             }
             System.out.print("...\n");
             
+            //Knuffa andra spelare om spelare landar på dem
             boolean skaKnuffa = true;
             while (skaKnuffa) {
                 skaKnuffa = false;
@@ -158,7 +180,9 @@ public class ByggeBob {
             }
             
             System.out.println("Nu ligger du ("+spelareNamn[nästaTur-1]+") på ruta "+spelareRuta[nästaTur-1]+".");
-            if (spelareRuta[nästaTur-1] % specialRutor == 0) {
+            
+            //Ropa på specialruta metod om man landar på specialruta
+            if (specialRutor > 0 && spelareRuta[nästaTur-1] % specialRutor == 0) {
                 System.out.println("...Som är en specialruta!");
                 System.out.println();
                 spelareRuta = specialRuta(spelareRuta, nästaTur, rutorPerRad, specialRutor, spelareNamn, skippaRunda, antalSpelare, rutaInnanSlag);
@@ -172,26 +196,29 @@ public class ByggeBob {
         return spelareRuta;
     }
     
+    // Hanterar det som händer när spelare landar på specialrutan
     static int[] specialRuta(int[] spelareRuta, int nästaTur, int rutorPerRad, int specialRutor, String[] spelareNamn, boolean[] skippaRunda, int antalSpelare, int rutaInnanSlag) {
         Scanner input = new Scanner(System.in);
         int händelse = (int)(Math.random()*10+1);
         
-        //hantera de två specialstraffen vid sista specialrutan
+        //hantera de två super händelserna vid sista specialrutan
         if (spelareRuta[nästaTur - 1] > (rutorPerRad*3+2 - specialRutor + 1)) {
             int chans = (int)(Math.random()*6+1);
             if (chans == 1) {
-                händelse = 11;
+                händelse = 11; // tillbaka till starten
             }
             else if (chans == 6) {
-                händelse = 12;
+                händelse = 12; //direkt till slutet
             }
         }
         
         switch (händelse) {
             case 1 -> {
+                //Ingenting händer
                 System.out.println("Du hade tur, ingenting hände!");
             }
             case 2 -> {
+                //Bananskal, gå bakåt ett steg
                 System.out.println("Du halkade på ett bananskal, du gick bakåt en ruta!");
                 if (spelareRuta[nästaTur - 1] > 1) {
                     spelareRuta[nästaTur - 1]--;
@@ -200,10 +227,12 @@ public class ByggeBob {
                 }
             }
             case 3 -> {
+                //Förkyld, missa runda
                 System.out.println("Du blev förkyld och orkar inte, du skippar en runda!");
                 skippaRunda[nästaTur - 1] = true;
             }
             case 4 -> {
+                //Teleporter, med den som ligger sist
                 System.out.println("Du hittade en teleporteringsapparat.");
                 
                 int minstaRutor = spelareRuta[0];
@@ -230,6 +259,7 @@ public class ByggeBob {
                 }
             }
             case 5 -> {
+                //Teleporter, med den som ligger först
                 System.out.println("Du hittade en teleporteringsapparat.");
                 
                 int mestRutor = spelareRuta[0];
@@ -256,15 +286,17 @@ public class ByggeBob {
                 }
             }
             case 6 -> {
+                //Minnesförlust, börja från vart du var innan och slå igen
                 System.out.println("Du slog ditt huvud och lider av minnesförlust");
                 System.out.println("Du är fortfarande i ruta "+rutaInnanSlag+", slå tärningen!");
                 System.out.println("\nTryck [Enter] för att slå tärningen");
                 input.nextLine();
                 int tärningSlag = tärningSlump();
                 System.out.println("Du slog "+ tärningSlag +"!");
-                spelareRuta[nästaTur - 1] += tärningSlag;
+                spelareRuta[nästaTur - 1] = rutaInnanSlag + tärningSlag;
             }
             case 7 -> {
+                //Hittade tärning, slå igen
                 System.out.println("Du hittade en tärning på golvet, slå igen!");
                 System.out.println("\nTryck [Enter] för att slå tärningen");
                 input.nextLine();
@@ -273,21 +305,28 @@ public class ByggeBob {
                 spelareRuta[nästaTur - 1] += bonusSlag;
             }
             case 8 -> {
+                //Dröm, skippades rundan
                 System.out.println("Rundan du nyss körde var bara en dröm.");
                 System.out.println("Nu är det för sent, din runda skippades!");
-                spelareRuta[nästaTur - 1] += rutaInnanSlag;
+                spelareRuta[nästaTur - 1] = rutaInnanSlag;
             }
             case 9 -> {
+                //Raket, framåt 3 rutor
                 System.out.println("Du hittade en raket och flög framåt 3 rutor!");
                 spelareRuta[nästaTur - 1] += 3;
             }
             case 10 -> {
+                //Baklängesraket, bakåt 3 rutor (minst ruta 0)
                 System.out.println("Du råkade sitta på en baklängesraket och flög bakåt 3 rutor!");
                 if (!(spelareRuta[nästaTur - 1] < 0)) {
                     spelareRuta[nästaTur - 1] -= 3;
                 }
+                if (spelareRuta[nästaTur - 1] < 0) {
+                    spelareRuta[nästaTur - 1] = 0;
+                }
             }
             case 11 -> {
+                //Hjärtattack och man blir lurad först
                 
                 System.out.println("Du hade tur, ingenting hände!");
                 System.out.println();
@@ -298,12 +337,14 @@ public class ByggeBob {
                 spelareRuta[nästaTur - 1] = 0;
             }
             case 12 -> {
+                //Teleporter till slutet
                 System.out.println("Du hittade en teleporteringsapparat.");
                 System.out.println("När du track på den så teleporterade du till slutet, grattis!");
                 spelareRuta[nästaTur - 1] = rutorPerRad * 3 + 3;
             }
         }
         
+        //Att man ska trycka enter efteråt (och för hjärtattack)
         System.out.println();
         if (händelse == 11) {
             System.out.println("Tryck [Enter] för att fortsätta (på riktigt den här gången)");
@@ -315,11 +356,13 @@ public class ByggeBob {
         return spelareRuta;
     }
     
+    //Skriver ut spelreglerna
     static void visaRegler() {
-        System.out.println("det här är reglerna");
+        System.out.println("det här är reglerna (inte klar än)");
         System.out.println();
     }
     
+    //Spelaren ändrar antal spelare, rutor per rad och specialrutornas mellanrum
     static int[] inställningar(int antalSpelare, int rutorPerRad, int specialRutor, Scanner input) {
         System.out.println("---- Inställningar ----");
         System.out.println("Antal spelare: " + antalSpelare);
@@ -358,9 +401,16 @@ public class ByggeBob {
                 }
             }
             
-            System.out.print("Nytt specialruta mellanrum? ");
-            specialRutor = input.nextInt();
-            input.nextLine();
+            while(true) {
+                System.out.print("Nytt specialruta mellanrum: ");
+                specialRutor = input.nextInt();
+                input.nextLine();
+                if (specialRutor < 0) {
+                    System.out.println("Error, mellanrum kan inte vara negativt.\n");
+                } else {    
+                    break;
+                }
+            }
         }
         return new int[]{antalSpelare, rutorPerRad, specialRutor};
     }
