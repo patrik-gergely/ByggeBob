@@ -117,7 +117,7 @@ public class ByggeBob {
     }
     
     // Hanterar en spel runda, att den slår tärningen, flyttar och även om man landar på specialruta
-    static int[] spelRunda(int nästaTur, int[] spelareRuta, int rutorPerRad, int antalSpelare, int specialRutor, boolean[] skippaRunda, int boardSize) {
+    static int[] spelRunda(int nästaTur, int[] spelareRuta, int rutorPerRad, int antalSpelare, int specialRutor, boolean[] skippaRunda, int spelplanStorlek) {
         Scanner input = new Scanner(System.in);
         String[] spelareSymboler = {"♠", "♥", "♦", "♣"};
         String[] spelareNamn = {"Späder", "Hjärter", "Ruter", "Klöver"};
@@ -141,7 +141,7 @@ public class ByggeBob {
         spelareRuta[nästaTur-1] = spelareRuta[nästaTur-1]+tärningSlag;
         
         //Spelaren vinner om de går över sista rutan
-        if (spelareRuta[nästaTur-1] >= boardSize) {
+        if (spelareRuta[nästaTur-1] >= spelplanStorlek) {
             spelareRuta[nästaTur-1] = -1;
         }
         
@@ -358,8 +358,17 @@ public class ByggeBob {
     
     //Skriver ut spelreglerna
     static void visaRegler() {
-        System.out.println("det här är reglerna (inte klar än)");
-        System.out.println();
+        System.out.println("---- Regler för Bygge Bob ----\n"
+                + "\n"
+                + "Målet är att vara den första som når den sista rutan på spelplanen\n"
+                + "\n"
+                + "Hur man spelar:\n"
+                + " - Det finns upp till fyra spelare, Späder, Hjärter, Ruter och Klöver.\n"
+                + " - När det är din tur får du slå en tärning och flytta rutor som du slog.\n"
+                + " - Om du landar på en ruta där någon annan är, så knuffas dem bakåt en ruta.\n"
+                + " - Om du landar på en specialruta, så blir det en händelse\n"
+                + " - Det kan vara både en bra eller dålig händelse, och ökad risk vid dem sista rutorna...\n"
+                + " - Spelet fortsätter tills det är bara en spelare som har inte vunnit.");
     }
     
     //Spelaren ändrar antal spelare, rutor per rad och specialrutornas mellanrum
@@ -372,6 +381,7 @@ public class ByggeBob {
         System.out.println("\nVill du ändra inställningarna? (J/N)");
         String fråga = input.nextLine();
         
+        //Om spelaren vill ändra inställningarna
         if (fråga.equalsIgnoreCase("J")) {
             while(true) {
                 System.out.print("Nytt antal spelare: ");
